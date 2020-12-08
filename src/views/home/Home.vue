@@ -1,7 +1,13 @@
 <template>
   <div id="home">
     <nav-bar class="home-nav"><div slot="center">购物街</div></nav-bar>
-    <scroll class="content">
+
+    <scroll class="content" 
+            ref="scroll" 
+            :probe-type="3" 
+            :pull-up-load="true"        
+             @scroll="contentScroll"
+             @pullingUp="loadMore">
       <home-swiper :banners="banners"/>
       <home-recommend class="home-recommend" :recommends="recommends"/>
       <feature-view/>
@@ -10,6 +16,8 @@
                   @tabClick="tabClick"/>
       <goods-list :goods="showGoods"/>
     </scroll>
+
+    <back-top @click.native="backClick" v-show="isShowBackTop"/>
   </div>
 </template>
 
@@ -19,6 +27,7 @@
   import Scroll from 'components/common/scroll/Scroll'
 
   import GoodsList from 'components/content/goods/GoodsList'
+  import BackTop from 'components/content/backtop/BackTop'
 
   import HomeSwiper from './childComps/HomeSwiper'
   import HomeRecommend from './childComps/HomeRecommend'
@@ -33,6 +42,7 @@
       TabControl,
       Scroll,
       GoodsList,
+      BackTop,
       HomeSwiper,
       HomeRecommend,
       FeatureView
@@ -47,7 +57,8 @@
           'new': { page:0, list:[] },
           'sell': { page:0, list:[] }
         },
-        currentType: 'pop'
+        currentType: 'pop',
+        isShowBackTop: false
       }
     },
     created() {
@@ -55,6 +66,10 @@
       this.getHomeGoods('pop')
       this.getHomeGoods('new')
       this.getHomeGoods('sell')
+
+      this.$bus.$on('itemImgLoad', () => {
+        this.$refs.scroll.refresh()
+      })
     },
     computed: {
       showGoods() {
@@ -76,15 +91,23 @@
             break
         }
       },
+      backClick() {
+        this.$refs.scroll.scrollTo(0, 0, 500)
+      },
+      contentScroll(position) {
+        this.isShowBackTop = (-position.y) > 1000 ? true : false
+      },
+      loadMore() {
+        this.getHomeGoods(this.currentType)
+        // console.log('1');
+      },
 
       // 网络请求相关的方法
       getHomeMultidata() {
-        getHomeMultidata().then(
-          res => {
-            this.banners = res.data.data.banner.list;
-            this.recommends = res.data.data.recommend.list;
-          }
-      )
+        getHomeMultidata().then(res => {
+          this.banners = res.data.data.banner.list;
+          this.recommends = res.data.data.recommend.list;
+        })
       },
       getHomeGoods(type) {
         const page = this.goods[type].page + 1
@@ -92,8 +115,9 @@
           console.log(res);
           this.goods[type].list.push(...res.data.data.list);
           this.goods[type].page += 1
-          }
-        )
+
+          this.$refs.scroll.finishPullUp()
+        })
       }    
     }
   }
