@@ -25,13 +25,18 @@ export default {
       this.$bus.$emit('itemImgLoad')
     },
     itemClick() {
-      this.$router.push('/detail/' + this.goodsItem.iid)
+      this.$router.push({
+        path: '/detail',
+        query: { 
+          iid: this.goodsItem.iid 
+        }
+      })
     }
   }
 }
 </script>
 
-<style>
+<style scoped>
   .goods-item {
     position: relative;
     padding-bottom: 40px;

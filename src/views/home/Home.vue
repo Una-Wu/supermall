@@ -66,7 +66,8 @@
         currentType: 'pop',
         isShowBackTop: false,
         tabOffsetTop: 0,
-        isShowTab: false
+        isShowTab: false,
+        saveY: 0
       }
     },
     created() {
