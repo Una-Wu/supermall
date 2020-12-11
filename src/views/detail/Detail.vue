@@ -1,15 +1,21 @@
 <template>
   <div id="detail">
-    <detail-nav-bar class="detail-nav"/>
-    <scroll class="content" ref="scroll">
+    <detail-nav-bar class="detail-nav" 
+                    @navItemClick="navItemClick" 
+                    ref="nav"/>
+    <scroll class="content"
+            ref="scroll"
+            :probe-type = "3"
+            @scroll="contentScroll">
       <detail-swiper :top-images="topImages"/>
       <detail-base-info :goods="goods"/>
       <detail-shop-info :shop="shop"/>
       <detail-goods-info :detail-info="detailInfo" @imageLoad="imageLoad"/>
-      <detail-param-info :param-info="paramInfo"/>
-      <detail-comment-info :commentInfo="commentInfo"/>
-      <goods-list :goods="recommends"/>
+      <detail-param-info :param-info="paramInfo" ref="params"/>
+      <detail-comment-info :commentInfo="commentInfo" ref="comment"/>
+      <goods-list :goods="recommends" ref="recommend"/>
     </scroll>
+    <detail-bottom-bar></detail-bottom-bar>
   </div>
 </template>
 
@@ -21,6 +27,8 @@ import DetailShopInfo from './childComponents/DetailShopInfo'
 import DetailGoodsInfo from './childComponents/DetailGoodsInfo'
 import DetailParamInfo from './childComponents/DetailParamInfo'
 import DetailCommentInfo from './childComponents/DetailCommentInfo'
+import DetailBottomBar from './childComponents/DetailBottomBar'
+
 
 import Scroll from 'components/common/scroll/Scroll'
 import GoodsList from 'components/content/goods/GoodsList'
@@ -39,6 +47,7 @@ export default {
     DetailGoodsInfo,
     DetailParamInfo,
     DetailCommentInfo,
+    DetailBottomBar,
     Scroll,
     GoodsList
   },
@@ -51,7 +60,10 @@ export default {
       detailInfo: {},
       paramInfo: {},
       commentInfo: {},
-      recommends: []
+      recommends: [],
+      offsetTops: [],
+      getOffsetTops: [],
+      currentIndex: 0
     }
   },
   mixins: [itemListenerMixin],
@@ -64,13 +76,7 @@ export default {
       // console.log(res);
       const data = res.data.result
 
-    // 请求推荐的数据
-    getRecommend().then(res => {
-      this.recommends = res.data.data.list
-      console.log(this.recommends);
-    })
-
-      // 获取顶部轮播图数据
+      // 1.获取顶部轮播图数据
       this.topImages = data.itemInfo.topImages
       // console.log(this.topImages);
     
@@ -86,10 +92,16 @@ export default {
       // 5.获取参数的信息
       this.paramInfo = new GoodsParam(data.itemParams.info, data.itemParams.rule)
 
-      // 获取评论信息
+      // 6.获取评论信息
       if(data.rate.cRate !== 0) {
         this.commentInfo = data.rate.list[0]
       }
+
+      // 7.请求推荐的数据
+      getRecommend().then(res => {
+        this.recommends = res.data.data.list
+        // console.log(this.recommends);
+      })
     })
   },
   mounted() {},
@@ -100,6 +112,29 @@ export default {
   methods: {
       imageLoad() {
         this.$refs.scroll.refresh()
+        this.getOffsetTops = debounce(() => {
+          this.offsetTops.push(0)
+          this.offsetTops.push(this.$refs.params.$el.offsetTop)
+          this.offsetTops.push(this.$refs.comment.$el.offsetTop)
+          this.offsetTops.push(this.$refs.recommend.$el.offsetTop)
+          this.offsetTops.push(Number.MAX_VALUE)
+        })
+        this.getOffsetTops() 
+        console.log(this.offsetTops);      
+      },
+      navItemClick(index) {
+        this.$refs.scroll.scrollTo(0, -this.offsetTops[index], 100)
+      },
+      contentScroll(position) {
+        const positionY = -position.y
+        const length = this.offsetTops.length
+        for (let i = 0; i < length-1; i++) {
+          if (this.currentIndex !== i && (positionY >= this.offsetTops[i] && positionY < this.offsetTops[i+1])) {
+            this.currentIndex = i
+            this.$refs.nav.currentIndex = this.currentIndex
+          }
+        }
+
       }
     }
 }
@@ -120,7 +155,7 @@ export default {
   }
 
   .content {
-    height: calc(100% - 44px);
+    height: calc(100% - 44px - 49px);
     overflow: hidden;
   }
 </style>
