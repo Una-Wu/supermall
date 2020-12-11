@@ -40,6 +40,8 @@
 
   import { getHomeMultidata,getHomeGoods } from 'network/home'
   import { debounce } from 'common/untils.js'
+  import { itemListenerMixin } from 'common/mixin'
+
 
   export default {
     name: "Home",
@@ -70,24 +72,21 @@
         saveY: 0
       }
     },
+    mixins: [itemListenerMixin],
     created() {
       this.getHomeMultidata()
       this.getHomeGoods('pop')
       this.getHomeGoods('new')
       this.getHomeGoods('sell')
     },
-    mounted() {
-      const refresh = debounce(this.$refs.scroll.refresh, 50)
-      this.$bus.$on('itemImgLoad', () => {
-        refresh()
-      })
-    },
+    mounted() {},
     activated() {
       this.$refs.scroll.scrollTo(0, this.saveY*1, 0)
       this.$refs.scroll.refresh()
     },
     deactivated() {
       this.saveY = this.$refs.scroll.getScrollY()
+      this.$bus.$off('itemImgLoad', this.itemImgListener)
     },
     computed: {
       showGoods() {
@@ -137,7 +136,7 @@
       getHomeGoods(type) {
         const page = this.goods[type].page + 1
         getHomeGoods(type, page).then(res => {
-          console.log(res);
+          // console.log(res);
           this.goods[type].list.push(...res.data.data.list);
           this.goods[type].page += 1
 

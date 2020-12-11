@@ -85,19 +85,19 @@
 
   .info-service {
     display: flex;
-    justify-content: space-between;
+    justify-content: space-around;
     line-height: 60px;
   }
 
   .info-service-item img {
-    width: 14px;
-    height: 14px;
-    position: relative;
+    position: relative; 
+    width: 12px;
+    height: 12px; 
     top: 2px;
   }
 
   .info-service-item span {
-    font-size: 13px;
+    font-size: 12px;
     color: #333;
   }
 </style>

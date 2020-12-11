@@ -7,6 +7,8 @@
       <detail-shop-info :shop="shop"/>
       <detail-goods-info :detail-info="detailInfo" @imageLoad="imageLoad"/>
       <detail-param-info :param-info="paramInfo"/>
+      <detail-comment-info :commentInfo="commentInfo"/>
+      <goods-list :goods="recommends"/>
     </scroll>
   </div>
 </template>
@@ -18,10 +20,14 @@ import DetailBaseInfo from './childComponents/DetailBaseInfo'
 import DetailShopInfo from './childComponents/DetailShopInfo'
 import DetailGoodsInfo from './childComponents/DetailGoodsInfo'
 import DetailParamInfo from './childComponents/DetailParamInfo'
+import DetailCommentInfo from './childComponents/DetailCommentInfo'
 
 import Scroll from 'components/common/scroll/Scroll'
+import GoodsList from 'components/content/goods/GoodsList'
 
-import { getDetailData, Goods, Shop, GoodsParam } from 'network/detail.js'
+import { getDetailData, Goods, Shop, GoodsParam, getRecommend } from 'network/detail.js'
+import { debounce } from 'common/untils.js'
+import { itemListenerMixin } from 'common/mixin'
 
 export default {
   name: 'Detail',
@@ -32,7 +38,9 @@ export default {
     DetailShopInfo,
     DetailGoodsInfo,
     DetailParamInfo,
-    Scroll
+    DetailCommentInfo,
+    Scroll,
+    GoodsList
   },
   data() {
     return {
@@ -42,21 +50,29 @@ export default {
       shop: {},
       detailInfo: {},
       paramInfo: {},
-      commentInfo: {}
+      commentInfo: {},
+      recommends: []
     }
   },
+  mixins: [itemListenerMixin],
   created() {
     // 1.保存存入的id
     this.iid = this.$route.query.iid
     
     // 2.根据存入的id请求详细的数据
     getDetailData(this.iid).then(res =>{
-      console.log(res);
+      // console.log(res);
       const data = res.data.result
+
+    // 请求推荐的数据
+    getRecommend().then(res => {
+      this.recommends = res.data.data.list
+      console.log(this.recommends);
+    })
 
       // 获取顶部轮播图数据
       this.topImages = data.itemInfo.topImages
-      console.log(this.topImages);
+      // console.log(this.topImages);
     
       // 2.获取商品信息
       this.goods = new Goods(data.itemInfo, data.columns, data.shopInfo.services)
@@ -75,6 +91,11 @@ export default {
         this.commentInfo = data.rate.list[0]
       }
     })
+  },
+  mounted() {},
+  destroyed() {
+    this.$bus.$off('itemImgLoad', this.itemImgListener)
+
   },
   methods: {
       imageLoad() {
@@ -100,5 +121,6 @@ export default {
 
   .content {
     height: calc(100% - 44px);
+    overflow: hidden;
   }
 </style>
