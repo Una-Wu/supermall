@@ -15,7 +15,8 @@
       <detail-comment-info :commentInfo="commentInfo" ref="comment"/>
       <goods-list :goods="recommends" ref="recommend"/>
     </scroll>
-    <detail-bottom-bar></detail-bottom-bar>
+    <detail-bottom-bar @addCart="addToCart"/>
+    <back-top @click.native="backClick" v-show="isShowBackTop"/>
   </div>
 </template>
 
@@ -33,9 +34,10 @@ import DetailBottomBar from './childComponents/DetailBottomBar'
 import Scroll from 'components/common/scroll/Scroll'
 import GoodsList from 'components/content/goods/GoodsList'
 
-import { getDetailData, Goods, Shop, GoodsParam, getRecommend } from 'network/detail.js'
-import { debounce } from 'common/untils.js'
-import { itemListenerMixin } from 'common/mixin'
+import { getDetailData, Goods, Shop, GoodsParam, getRecommend } from 'network/detail'
+import { debounce } from 'common/untils'
+import { itemListenerMixin, backTopMixin } from 'common/mixin'
+import { BACK_POSITIONG } from 'common/const'
 
 export default {
   name: 'Detail',
@@ -66,7 +68,7 @@ export default {
       currentIndex: 0
     }
   },
-  mixins: [itemListenerMixin],
+  mixins: [itemListenerMixin, backTopMixin],
   created() {
     // 1.保存存入的id
     this.iid = this.$route.query.iid
@@ -120,12 +122,13 @@ export default {
           this.offsetTops.push(Number.MAX_VALUE)
         })
         this.getOffsetTops() 
-        console.log(this.offsetTops);      
+        // console.log(this.offsetTops);      
       },
       navItemClick(index) {
         this.$refs.scroll.scrollTo(0, -this.offsetTops[index], 100)
       },
       contentScroll(position) {
+        this.isShowBackTop = (-position.y) > BACK_POSITIONG
         const positionY = -position.y
         const length = this.offsetTops.length
         for (let i = 0; i < length-1; i++) {
@@ -134,8 +137,21 @@ export default {
             this.$refs.nav.currentIndex = this.currentIndex
           }
         }
-
+      },
+      addToCart() {
+        console.log('----');
+        // 获取购物车需要展示的信息
+        const product = {}
+        product.image = this.topImages[0]
+        product.title = this.goods.title
+        product.desc = this.goods.desc
+        product.price = this.goods.newPrice
+        product.iid = this.iid
+        
+        // 将商品添加到购物车
+        this.$store.dispatch('addCart',product)
       }
+      
     }
 }
 </script>

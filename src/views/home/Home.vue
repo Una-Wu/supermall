@@ -14,8 +14,9 @@
              @scroll="contentScroll"
              @pullingUp="loadMore">
       <home-swiper :banners="banners" @swiperImgLoad="swiperImgLoad"/>
-      <home-recommend class="home-recommend" :recommends="recommends"/>
-      <feature-view/>
+      <home-recommend class="home-recommend" 
+                      :recommends="recommends"     @recommendImgLoad="recommendImgLoad"/>
+      <feature-view @featureImgLoad="featureImgLoad"/>
       <tab-control :titles="['流行','新款','精选']" 
                   @tabClick="tabClick"
                   ref="tabControl2"/>
@@ -39,8 +40,10 @@
   import FeatureView from './childComps/FeatureView'
 
   import { getHomeMultidata,getHomeGoods } from 'network/home'
-  import { debounce } from 'common/untils.js'
-  import { itemListenerMixin } from 'common/mixin'
+  import { debounce } from 'common/untils'
+  import { itemListenerMixin, backTopMixin } from 'common/mixin'
+  import { BACK_POSITIONG } from 'common/const'
+
 
 
   export default {
@@ -50,7 +53,7 @@
       TabControl,
       Scroll,
       GoodsList,
-      BackTop,
+      // BackTop,
       HomeSwiper,
       HomeRecommend,
       FeatureView
@@ -66,13 +69,13 @@
           'sell': { page:0, list:[] }
         },
         currentType: 'pop',
-        isShowBackTop: false,
-        tabOffsetTop: 0,
+        // isShowBackTop: false,
+        tabOffsetTop: [],
         isShowTab: false,
         saveY: 0
       }
     },
-    mixins: [itemListenerMixin],
+    mixins: [itemListenerMixin, backTopMixin],
     created() {
       this.getHomeMultidata()
       this.getHomeGoods('pop')
@@ -110,19 +113,27 @@
         this.$refs.tabControl1.currentIndex = index
         this.$refs.tabControl2.currentIndex = index
       },
-      backClick() {
-        this.$refs.scroll.scrollTo(0, 0, 500)
-      },
+      // backClick() {
+      //   this.$refs.scroll.scrollTo(0, 0, 500)
+      // },
       contentScroll(position) {
-        this.isShowBackTop = (-position.y) > 1000
-        this.isShowTab = (-position.y) > this.tabOffsetTop
+        this.isShowBackTop = (-position.y) > BACK_POSITIONG
+        this.isShowTab = (-position.y) > Math.max.apply(null,this.tabOffsetTop)
       },
       loadMore() {
         this.getHomeGoods(this.currentType)
         // console.log('1');
       },
       swiperImgLoad() {
-        this.tabOffsetTop = this.$refs.tabControl2.$el.offsetTop
+        this.tabOffsetTop.push(this.$refs.tabControl2.$el.offsetTop)
+        // console.log(this.tabOffsetTop);
+      },
+      recommendImgLoad() {
+        this.tabOffsetTop.push(this.$refs.tabControl2.$el.offsetTop)
+        // console.log(this.tabOffsetTop);
+      },
+      featureImgLoad() {
+        this.tabOffsetTop.push(this.$refs.tabControl2.$el.offsetTop)
         // console.log(this.tabOffsetTop);
       },
 
