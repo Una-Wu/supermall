@@ -17,6 +17,7 @@
     </scroll>
     <detail-bottom-bar @addCart="addToCart"/>
     <back-top @click.native="backClick" v-show="isShowBackTop"/>
+    <toast/>
   </div>
 </template>
 
@@ -33,11 +34,13 @@ import DetailBottomBar from './childComponents/DetailBottomBar'
 
 import Scroll from 'components/common/scroll/Scroll'
 import GoodsList from 'components/content/goods/GoodsList'
+import Toast from 'components/common/toast/Toast'
 
 import { getDetailData, Goods, Shop, GoodsParam, getRecommend } from 'network/detail'
 import { debounce } from 'common/untils'
 import { itemListenerMixin, backTopMixin } from 'common/mixin'
 import { BACK_POSITIONG } from 'common/const'
+import { mapActions } from 'vuex'
 
 export default {
   name: 'Detail',
@@ -51,7 +54,8 @@ export default {
     DetailCommentInfo,
     DetailBottomBar,
     Scroll,
-    GoodsList
+    GoodsList,
+    Toast
   },
   data() {
     return {
@@ -65,7 +69,9 @@ export default {
       recommends: [],
       offsetTops: [],
       getOffsetTops: [],
-      currentIndex: 0
+      currentIndex: 0,
+      message: '',
+      show: false
     }
   },
   mixins: [itemListenerMixin, backTopMixin],
@@ -112,47 +118,56 @@ export default {
 
   },
   methods: {
-      imageLoad() {
-        this.$refs.scroll.refresh()
-        this.getOffsetTops = debounce(() => {
-          this.offsetTops.push(0)
-          this.offsetTops.push(this.$refs.params.$el.offsetTop)
-          this.offsetTops.push(this.$refs.comment.$el.offsetTop)
-          this.offsetTops.push(this.$refs.recommend.$el.offsetTop)
-          this.offsetTops.push(Number.MAX_VALUE)
-        })
-        this.getOffsetTops() 
-        // console.log(this.offsetTops);      
-      },
-      navItemClick(index) {
-        this.$refs.scroll.scrollTo(0, -this.offsetTops[index], 100)
-      },
-      contentScroll(position) {
-        this.isShowBackTop = (-position.y) > BACK_POSITIONG
-        const positionY = -position.y
-        const length = this.offsetTops.length
-        for (let i = 0; i < length-1; i++) {
-          if (this.currentIndex !== i && (positionY >= this.offsetTops[i] && positionY < this.offsetTops[i+1])) {
-            this.currentIndex = i
-            this.$refs.nav.currentIndex = this.currentIndex
-          }
+    ...mapActions(['addCart']),
+    imageLoad() {
+      this.$refs.scroll.refresh()
+      this.getOffsetTops = debounce(() => {
+        this.offsetTops.push(0)
+        this.offsetTops.push(this.$refs.params.$el.offsetTop)
+        this.offsetTops.push(this.$refs.comment.$el.offsetTop)
+        this.offsetTops.push(this.$refs.recommend.$el.offsetTop)
+        this.offsetTops.push(Number.MAX_VALUE)
+      })
+      this.getOffsetTops() 
+      // console.log(this.offsetTops);      
+    },
+    navItemClick(index) {
+      this.$refs.scroll.scrollTo(0, -this.offsetTops[index], 100)
+    },
+    contentScroll(position) {
+      this.isShowBackTop = (-position.y) > BACK_POSITIONG
+      const positionY = -position.y
+      const length = this.offsetTops.length
+      for (let i = 0; i < length-1; i++) {
+        if (this.currentIndex !== i && (positionY >= this.offsetTops[i] && positionY < this.offsetTops[i+1])) {
+          this.currentIndex = i
+          this.$refs.nav.currentIndex = this.currentIndex
         }
-      },
-      addToCart() {
-        console.log('----');
-        // 获取购物车需要展示的信息
-        const product = {}
-        product.image = this.topImages[0]
-        product.title = this.goods.title
-        product.desc = this.goods.desc
-        product.price = this.goods.newPrice
-        product.iid = this.iid
-        
-        // 将商品添加到购物车
-        this.$store.dispatch('addCart',product)
       }
+    },
+    addToCart() {
+      console.log('----');
+      // 获取购物车需要展示的信息
+      const product = {}
+      product.image = this.topImages[0]
+      product.title = this.goods.title
+      product.desc = this.goods.desc
+      product.price = this.goods.realPrice
+      product.iid = this.iid
       
-    }
+      // 将商品添加到购物车
+      this.addCart(product).then(res => {
+        this.$toast.show(res,1500)
+        /* this.show = true
+        this.message = res
+
+        setTimeout(() => {
+          this.show = false
+          this.message = ''
+        }, 1500) */
+      })
+    }   
+  }
 }
 </script>
   
