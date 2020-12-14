@@ -1,7 +1,7 @@
 <template>
   <div class="bottom-bar">
     <div class="bar-item bar-left">
-      <div>
+      <div class="bar-left-item">
         <i class="icon service"></i>
         <span class="text">客服</span>
       </div>
@@ -36,7 +36,6 @@ export default {
 <style scoped>
   .bottom-bar {
     display: flex;
-    position: relative;
     /* bottom: 49px; */
     height: 49px;
     background-color: #fff;
@@ -56,7 +55,8 @@ export default {
     display: block;
     width: 22px;
     height: 22px;
-    margin: 5px auto 3px;
+    margin: 0 auto;
+    margin-top: 5px;
     background: url("~assets/img/detail/detail_bottom.png") 0 0/100%;
   }
   .bar-left .service {
